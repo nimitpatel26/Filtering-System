@@ -1,0 +1,4 @@
+You did not respect the submission format.
+You should explore more efficient data structure. Linked list will work for just initial implementation.
+Please note that UDP's is connectionless.
+You have to identify more syscalls, and functions that need to be modified for blocking mechanisms. 

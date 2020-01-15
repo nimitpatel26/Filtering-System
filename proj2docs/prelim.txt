@@ -1,0 +1,68 @@
+
+/********************
+*
+* Nimit Patel
+* CMSC 421
+* Project 2
+* Preliminary Design
+* prelim.txt
+*
+*********************/
+
+
+-------------------------
+Network Firewall Storage
+-------------------------
+* There will be a struct that stores the port number, incoming/outgoing, protocol type, and the counter.
+* The linked list will be made up of these structs.
+
+----------------------------
+File Access Control Storage
+----------------------------
+* Similarly, there will be a struct that stores the filename and the counter.
+* The linked list will be made up of these structs.
+
+
+--------------------
+Concurrancy/Locking
+--------------------
+* The critical section is the part where the list of blocked ports/files is being changed.
+* If two processes call block on the same port at the same time, then one of the processes should get an error because the port is already blocked.
+* I will use spinlocks to implement locking. 
+
+
+------------------------------------------
+Network Firewall Kernel Code Modification
+------------------------------------------
+* Syscalls for connect and bind are in /net/socket.c line 1682 and 1502, respectively.
+* They both pass in the arguments to the function right above the system calls, __sys_connect() and __sys_bind().
+* move_addr_to_kernel() function is the one that copies the address from the userspace to the kernel space.
+* File descriptor fd is used to get a socket struct pointer.
+* Socket struct has a sock struct and from the sock struct the port number could be retrived. (sk_num)
+* sk_prot can be used to get the protocol.
+
+* Right after move_addr_to_kernel() some code should be added.
+* err = checkIfBlocked()
+* If error is returned, then the if statement won't run and the port won't be binded.
+* Siimilar thing can be done in __sys_bind().
+
+* If the protocol, incoming/outgoing, and the port match, then the function will return a negative number and the access will be blocked.
+
+---------------------------------------------
+File Access Control Kernel Code Modification
+---------------------------------------------
+* The system calls for open, mkdir, rename, ... are used to access the file.
+* open is in /fs/open.c
+* rename and mkdir are in /fs/namei.c
+
+* There are many system calls that access the file.
+* Their common point is the function getname_flags().
+* It returns the struct filename.
+* This function copies const char __user *filename to the kernel space and puts it into the struct.
+* We can check if the name is in the list of blocked files and return an error if it is.
+
+
+------
+Other
+------
+* I will put the syscalls related to file access control in the /fs/ folder and the syscalls related to the firewall in the /net/ folder.
